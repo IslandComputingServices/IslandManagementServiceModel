@@ -23,11 +23,21 @@
 - MUST NOT assume or make up domain names
 - MUST ask for explicit values for all contact and service information
 
+### PR COMMENT RESPONSE STANDARDS:
+- MUST respond to ALL PR comments with detailed explanations
+- MUST use clear status indicators: ✅ Fixed, ✅ Explanation, ✅ Addressed
+- MUST explain the reasoning behind design decisions when questioned
+- MUST show specific locations where changes were made
+- MUST provide comprehensive PR comment summarizing all addressed items
+- MUST help reviewer track what was fixed vs what needed clarification
+- MUST follow format: "✅ **[Comment Quote]** - **[Status]**: [Detailed explanation]"
+
 ### FILE CLEANUP RULES:
 - MUST NOT commit temporary files (READY.md, PR_READY.md, etc.)
 - MUST clean up all temporary files before committing
 - MUST only commit relevant specification and documentation files
 - MUST follow clean commit practices and standards
+- MUST use proper file naming without "corrected", "fixed", or similar suffixes
 
 ### BEFORE ANY REPOSITORY OPERATIONS:
 - [ ] Get explicit approval for repository creation
@@ -36,6 +46,7 @@
 - [ ] Get actual contact information and service URLs
 - [ ] Verify all assumed attributes with user
 - [ ] Clean up all temporary files
+- [ ] Prepare comprehensive PR comment responses
 
 ### FUNDAMENTAL UNDERSTANDING:
 **ICS (Island Computing Services) is a COMPLETE, INDEPENDENT cloud computing platform. ICS operates its own data centers, servers, networking, and storage infrastructure. ICS competes directly with other major cloud providers.**
