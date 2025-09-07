@@ -25,12 +25,14 @@
 
 ### PR COMMENT RESPONSE STANDARDS:
 - MUST respond to ALL PR comments with detailed explanations
+- MUST reply directly to each individual comment thread using in_reply_to
 - MUST use clear status indicators: ✅ Fixed, ✅ Explanation, ✅ Addressed
 - MUST explain the reasoning behind design decisions when questioned
 - MUST show specific locations where changes were made
 - MUST provide comprehensive PR comment summarizing all addressed items
 - MUST help reviewer track what was fixed vs what needed clarification
-- MUST follow format: "✅ **[Comment Quote]** - **[Status]**: [Detailed explanation]"
+- MUST follow format: "✅ **[Status]**: [Detailed explanation]"
+- MUST use GitHub API to reply to individual comments, not just general PR comments
 
 ### FILE CLEANUP RULES:
 - MUST NOT commit temporary files (READY.md, PR_READY.md, etc.)
