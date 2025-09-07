@@ -1,5 +1,12 @@
 # AI Agent Instructions for IslandsManagementService-vishalsirohi
 
+## 🚨 CRITICAL: ICS IS AN INDEPENDENT CLOUD PLATFORM
+
+### FUNDAMENTAL UNDERSTANDING:
+**ICS (Island Computing Services) is a COMPLETE, INDEPENDENT cloud computing platform. ICS operates its own data centers, servers, networking, and storage infrastructure. ICS competes directly with other major cloud providers.**
+
+**API field names and patterns follow industry standards for developer familiarity - to reduce learning curve for customers.**
+
 ## 🚨 CRITICAL: REPOSITORY AND ATTRIBUTE CONSTRAINTS
 
 ### REPOSITORY CREATION RULES:
@@ -16,12 +23,19 @@
 - MUST NOT assume or make up domain names
 - MUST ask for explicit values for all contact and service information
 
+### FILE CLEANUP RULES:
+- MUST NOT commit temporary files (READY.md, PR_READY.md, etc.)
+- MUST clean up all temporary files before committing
+- MUST only commit relevant specification and documentation files
+- MUST follow clean commit practices and standards
+
 ### BEFORE ANY REPOSITORY OPERATIONS:
 - [ ] Get explicit approval for repository creation
 - [ ] Confirm organization (IslandComputingServices)
 - [ ] Confirm repository name and purpose
 - [ ] Get actual contact information and service URLs
 - [ ] Verify all assumed attributes with user
+- [ ] Clean up all temporary files
 
 ### FUNDAMENTAL UNDERSTANDING:
 **ICS (Island Computing Services) is a COMPLETE, INDEPENDENT cloud computing platform. ICS operates its own data centers, servers, networking, and storage infrastructure. ICS competes directly with other major cloud providers.**
