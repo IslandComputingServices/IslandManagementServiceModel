@@ -1,6 +1,27 @@
 # AI Agent Instructions for IslandsManagementService-vishalsirohi
 
-## 🚨 CRITICAL: ICS IS AN INDEPENDENT CLOUD PLATFORM
+## 🚨 CRITICAL: REPOSITORY AND ATTRIBUTE CONSTRAINTS
+
+### REPOSITORY CREATION RULES:
+- MUST ask for explicit approval before creating ANY new repository
+- MUST use IslandComputingServices organization for all ICS repositories
+- MUST NOT create repositories under personal accounts
+- MUST follow ICS repository naming conventions
+- MUST get team approval for repository structure and purpose
+
+### ATTRIBUTE CONSTRAINTS:
+- MUST NOT assume or make up email addresses
+- MUST NOT assume or make up service URLs
+- MUST NOT assume or make up contact information
+- MUST NOT assume or make up domain names
+- MUST ask for explicit values for all contact and service information
+
+### BEFORE ANY REPOSITORY OPERATIONS:
+- [ ] Get explicit approval for repository creation
+- [ ] Confirm organization (IslandComputingServices)
+- [ ] Confirm repository name and purpose
+- [ ] Get actual contact information and service URLs
+- [ ] Verify all assumed attributes with user
 
 ### FUNDAMENTAL UNDERSTANDING:
 **ICS (Island Computing Services) is a COMPLETE, INDEPENDENT cloud computing platform. ICS operates its own data centers, servers, networking, and storage infrastructure. ICS competes directly with other major cloud providers.**
