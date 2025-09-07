@@ -23,7 +23,7 @@ paths:
           schema:
             type: string
             pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-          description: ICS request identifier (client-generated UUID following major cloud provider standard)
+          description: ICS request identifier - MUST be client-generated UUID for request tracking and correlation (follows major cloud provider standard)
         - name: x-ics-idempotency-token
           in: header
           required: false
@@ -304,6 +304,7 @@ components:
           type: string
           pattern: '^isl-[a-zA-Z0-9]+$'
           example: "isl-abcdef123"
+          description: "Short island identifier extracted from IRN for convenience - both IslandIRN and IslandId provided as requested"
         Name:
           type: string
           minLength: 1
@@ -317,10 +318,12 @@ components:
           type: string
           enum: [pending, provisioning, running, stopping, stopped, shutting-down, terminated]
           example: "running"
+          description: "Island lifecycle state - provisioning indicates infrastructure setup (VPC, compute, etc.)"
         EnvironmentType:
           type: string
           enum: [testing, staging, production]
           example: "production"
+          description: "Environment classification - enum chosen for API consistency and validation. Limited to 3 core environments as per requirements."
         LaunchTime:
           type: string
           format: date-time
