@@ -23,7 +23,7 @@ paths:
           schema:
             type: string
             pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-          description: ICS request identifier
+          description: ICS request identifier (client-generated UUID following major cloud provider standard)
         - name: x-ics-idempotency-token
           in: header
           required: false
@@ -71,49 +71,49 @@ paths:
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BadRequestException'
         '401':
           description: Unauthorized
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedException'
         '403':
           description: Forbidden
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ForbiddenException'
         '404':
           description: Resource Not Found
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundException'
         '409':
           description: Conflict
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ConflictException'
         '429':
           description: Too Many Requests
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ThrottlingException'
         '500':
           description: Internal Server Error
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/InternalException'
         '503':
           description: Service Unavailable
           content:
             application/x-ics-json-1.0:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ServiceUnavailableException'
 
 components:
   schemas:
@@ -491,6 +491,200 @@ components:
       required:
         - RequestId
       properties:
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    # Exception Models - Clearly Named
+    BadRequestException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [InvalidParameter, InvalidParameterValue, MissingParameter]
+              example: "InvalidParameter"
+            Message:
+              type: string
+              example: "The parameter 'InstanceType' is invalid"
+            Details:
+              type: object
+              description: "Additional error context"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    UnauthorizedException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [UnauthorizedOperation, InvalidCredentials]
+              example: "UnauthorizedOperation"
+            Message:
+              type: string
+              example: "You are not authorized to perform this operation"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    ForbiddenException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [AccessDenied, InsufficientPermissions]
+              example: "AccessDenied"
+            Message:
+              type: string
+              example: "Access denied for this resource"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    NotFoundException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [InvalidIslandId.NotFound, ResourceNotFound]
+              example: "InvalidIslandId.NotFound"
+            Message:
+              type: string
+              example: "The island ID does not exist"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    ConflictException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [DependencyViolation, InvalidState, OperationNotPermitted]
+              example: "InvalidState"
+            Message:
+              type: string
+              example: "The island is in an invalid state for this operation"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    ThrottlingException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [Throttling, RequestLimitExceeded]
+              example: "Throttling"
+            Message:
+              type: string
+              example: "Request rate limit exceeded"
+            RetryAfter:
+              type: integer
+              description: "Seconds to wait before retrying"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    InternalException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [InternalError, ServiceError]
+              example: "InternalError"
+            Message:
+              type: string
+              example: "An internal error occurred"
+        RequestId:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+    ServiceUnavailableException:
+      type: object
+      required:
+        - Error
+        - RequestId
+      properties:
+        Error:
+          type: object
+          required:
+            - Code
+            - Message
+          properties:
+            Code:
+              type: string
+              enum: [ServiceUnavailable, InsufficientCapacity]
+              example: "ServiceUnavailable"
+            Message:
+              type: string
+              example: "The service is temporarily unavailable"
+            RetryAfter:
+              type: integer
+              description: "Seconds to wait before retrying"
         RequestId:
           type: string
           pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
