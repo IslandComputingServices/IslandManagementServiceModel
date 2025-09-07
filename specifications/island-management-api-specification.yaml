@@ -376,6 +376,8 @@ components:
 
     ComputeSpecification:
       type: object
+      required:
+        - InstanceType
       properties:
         InstanceType:
           type: string
