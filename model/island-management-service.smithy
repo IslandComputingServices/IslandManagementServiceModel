@@ -473,19 +473,19 @@ structure ContainerImage {
     PullPolicy: ImagePullPolicy = "IfNotPresent"
 }
 
-/// Deployment preferences following AWS Apollo patterns
+/// Deployment preferences for application updates
 structure DeploymentPreferences {
     /// Deployment strategy type
     @required
     Strategy: DeploymentStrategy
 
-    /// Healthy percentage during rolling deployments (like AWS Apollo)
-    @range(min: 0, max: 100)
-    HealthyPercentage: Integer = 75
+    /// Minimum percentage of instances that must remain healthy during deployment
+    @range(min: 50, max: 100)
+    MinHealthyPercentage: Integer = 75
 
-    /// Maximum percentage of capacity that can be taken out during deployment
-    @range(min: 0, max: 100)
-    MaxUnavailablePercentage: Integer = 25
+    /// Maximum percentage of instances that can be replaced simultaneously
+    @range(min: 0, max: 50)
+    MaxReplacementPercentage: Integer = 25
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
