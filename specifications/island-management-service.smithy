@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace com.islandcomputing.islands
+namespace com.islandcomputing.ims
 
 use aws.protocols#restJson1
 use aws.api#service
