@@ -4,7 +4,6 @@ namespace com.islandcomputing.ims
 
 use aws.protocols#restJson1
 use aws.api#service
-use smithy.framework#ValidationException
 
 /// Custom trait for ICS IRN namespace generation
 @trait(selector: "service")
@@ -18,7 +17,7 @@ structure irnNamespace {
     sdkId: "ICS Island Management"
     endpointPrefix: "ims"
 )
-@irnNamespace("ims")
+@irnNamespace(value: "ims")
 @restJson1
 @title("ICS Island Management Service")
 service IslandManagementService {
@@ -31,7 +30,7 @@ service IslandManagementService {
         ResizeIsland
     ]
     errors: [
-        ValidationException
+        ICSValidationException
         InvalidParameterException
         ResourceNotFoundException
         UnauthorizedException
@@ -487,7 +486,7 @@ structure DeploymentPreferences {
     /// Deployment type - rolling, blue-green, or resizing
     /// System automatically sets to RESIZING when capacity change detected
     @required
-    DeploymentType: DeploymentType = "ROLLING"
+    DeploymentType: DeploymentType = "rolling"
 
     /// Minimum percentage of instances that must stay healthy during deployment
     /// For resizing: calculated from current_capacity (prevents cost explosion)
@@ -669,6 +668,14 @@ structure DeploymentStatusSummary {
     /// Progress percentage (0-100)
     @range(min: 0, max: 100)
     ProgressPercentage: Integer
+}
+
+/// Island activity status
+enum IslandActivityStatus {
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 }
 
 /// Island activity (deployment or resizing event)
@@ -1000,6 +1007,20 @@ map EnvironmentVariableMap {
 }
 
 // ========== Error Structures ==========
+
+/// ICS validation exception for invalid input parameters
+@error("client")
+@httpError(400)
+structure ICSValidationException {
+    @required
+    message: String
+    
+    /// Field that caused the validation error
+    field: String
+    
+    /// Validation error code
+    code: String
+}
 
 /// Invalid parameter error
 @error("client")
