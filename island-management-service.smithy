@@ -6,11 +6,19 @@ use aws.protocols#restJson1
 use aws.api#service
 use smithy.framework#ValidationException
 
+/// Custom trait for ICS IRN namespace generation
+@trait(selector: "service")
+structure irnNamespace {
+    @required
+    value: String
+}
+
 /// ICS Island Management Service - Native service for managing compute islands
 @service(
     sdkId: "ICS Island Management"
     endpointPrefix: "ims"
 )
+@irnNamespace("ims")
 @restJson1
 @title("ICS Island Management Service")
 service IslandManagementService {
@@ -184,7 +192,7 @@ structure ModifyIslandRequest {
 
     /// Island IRN to modify
     @required
-    @pattern("^irn:ics:core:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
+    @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
     IslandId: String
 
     /// Environment classification
@@ -221,7 +229,7 @@ structure ScaleIslandRequest {
 
     /// Island IRN to scale
     @required
-    @pattern("^irn:ics:core:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
+    @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
     IslandId: String
 
     /// Compute scaling configuration
@@ -298,7 +306,7 @@ structure ScaleIslandResponse {
 structure Island {
     /// Full island IRN following ICS standards
     @required
-    @pattern("^irn:ics:core:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
+    @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
     IslandIRN: String
 
     /// Short island identifier for convenience
@@ -424,7 +432,7 @@ structure Filter {
 structure IslandStateChange {
     /// Island IRN
     @required
-    @pattern("^irn:ics:core:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
+    @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
     IslandId: String
 
     /// Current state
