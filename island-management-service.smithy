@@ -459,7 +459,7 @@ structure IslandStateInfo {
 structure ScalingActivity {
     /// Activity IRN
     @required
-    @pattern("^irn:ics:scaling:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+:resource/[a-zA-Z0-9-]+$")
+    @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+:resource/[a-zA-Z0-9-]+$")
     ActivityId: String
 
     /// Activity status
