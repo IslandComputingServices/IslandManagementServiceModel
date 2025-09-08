@@ -479,9 +479,9 @@ structure DeploymentPreferences {
     @required
     Strategy: DeploymentStrategy
 
-    /// Deployment style - how to balance speed, safety, and cost
+    /// Deployment mode - clear outcomes customers can understand and predict
     @required
-    DeploymentStyle: DeploymentStyle = "BALANCED"
+    DeploymentMode: DeploymentMode = "MINIMAL_RISK"
 
     /// Healthy instances configuration
     @required
@@ -539,11 +539,11 @@ enum UnitType {
     COUNT = "count"
 }
 
-/// Deployment style - how to balance speed, safety, and cost
-enum DeploymentStyle {
-    CONSERVATIVE = "conservative"    // Prioritize safety and cost control over speed
-    BALANCED = "balanced"           // Balance between safety, speed, and cost
-    AGGRESSIVE = "aggressive"       // Prioritize speed over safety and cost
+/// Deployment mode - clear outcomes customers can understand and predict
+enum DeploymentMode {
+    ZERO_DOWNTIME = "zero-downtime"      // Guarantee no service interruption (may cost 2x during deployment)
+    MINIMAL_RISK = "minimal-risk"        // Keep 90% capacity, replace 10% at a time (may cost 1.1x during deployment)  
+    COST_OPTIMIZED = "cost-optimized"    // No extra cost, replace instances one-by-one (slower deployment)
 }
 
 /// Canary deployment configuration
