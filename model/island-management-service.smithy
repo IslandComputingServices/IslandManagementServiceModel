@@ -397,13 +397,13 @@ structure BlockDeviceMapping {
     @required
     DeviceName: String
 
-    /// IBS configuration
+    /// ISS configuration
     @required
-    Ibs: IbsBlockDevice
+    Iss: IssBlockDevice
 }
 
-/// IBS block device configuration
-structure IbsBlockDevice {
+/// ISS block device configuration
+structure IssBlockDevice {
     /// Volume size in GB (local storage at hypervisor level)
     @required
     @range(min: 1, max: 16384)
