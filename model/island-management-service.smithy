@@ -487,7 +487,8 @@ structure DeploymentPreferences {
     @range(min: 0, max: 100)
     MinHealthyPercentage: Integer = 75
 
-    /// Maximum allowed additional capacity percentage during deployment (0% = no extra cost, 100% = double capacity)
+    /// Maximum allowed additional capacity percentage during deployment 
+    /// (calculated from the higher of current or target capacity to support scaling operations)
     @required
     @range(min: 0, max: 200)
     MaxAllowedAdditionalCapacityPercentage: Integer = 50
