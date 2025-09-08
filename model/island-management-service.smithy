@@ -479,6 +479,10 @@ structure DeploymentPreferences {
     @required
     Strategy: DeploymentStrategy
 
+    /// Deployment style - how to balance speed, safety, and cost
+    @required
+    DeploymentStyle: DeploymentStyle = "BALANCED"
+
     /// Healthy instances configuration
     @required
     HealthyConfig: HealthyConfig
@@ -490,9 +494,6 @@ structure DeploymentPreferences {
     /// Maximum capacity surge allowed during deployment
     @range(min: 1.0, max: 3.0)
     AllowedMaxCapacityMultiple: Double = 1.5
-
-    /// Conflict resolution strategy when healthy + replacement > allowed capacity
-    ConflictResolution: ConflictResolutionStrategy = "PRIORITIZE_HEALTHY"
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
@@ -538,11 +539,11 @@ enum UnitType {
     COUNT = "count"
 }
 
-/// Conflict resolution strategy when healthy + replacement exceeds capacity limits
-enum ConflictResolutionStrategy {
-    PRIORITIZE_HEALTHY = "prioritize-healthy"        // Reduce replacement batch to maintain healthy count
-    PRIORITIZE_SPEED = "prioritize-speed"           // Reduce healthy count to maintain replacement batch
-    BALANCED = "balanced"                           // Reduce both proportionally to fit within limits
+/// Deployment style - how to balance speed, safety, and cost
+enum DeploymentStyle {
+    CONSERVATIVE = "conservative"    // Prioritize safety and cost control over speed
+    BALANCED = "balanced"           // Balance between safety, speed, and cost
+    AGGRESSIVE = "aggressive"       // Prioritize speed over safety and cost
 }
 
 /// Canary deployment configuration
