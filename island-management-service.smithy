@@ -9,7 +9,6 @@ use smithy.framework#ValidationException
 /// ICS Island Management Service - Native service for managing compute islands
 @service(
     sdkId: "ICS Islands"
-    arnNamespace: "ics"
     cloudFormationName: "ICS::Islands"
     cloudTrailEventSource: "islands.islandcomputing.io"
     endpointPrefix: "islands"
