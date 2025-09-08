@@ -345,6 +345,10 @@ structure Island {
 
 /// Compute configuration for island
 structure ComputeConfiguration {
+    /// Configuration version (increments with each change)
+    @required
+    Version: Integer
+
     /// Instance type
     @required
     InstanceType: InstanceType
@@ -364,9 +368,17 @@ structure ComputeConfiguration {
     @range(min: 0, max: 1000)
     DesiredCapacity: Integer
 
+    /// Current running instance count for this configuration
+    @required
+    @range(min: 0, max: 1000)
+    RunningCount: Integer
+
     /// Configuration status
     @required
     Status: ComputeConfigurationStatus
+
+    /// Deployment strategy for this configuration
+    DeploymentStrategy: DeploymentStrategy
 
     /// Health check type
     HealthCheckType: HealthCheckType = "ILB"
@@ -393,6 +405,9 @@ structure ComputeSpecification {
     /// Desired number of instances
     @range(min: 0, max: 1000)
     DesiredCapacity: Integer
+
+    /// Deployment strategy for updates
+    DeploymentStrategy: DeploymentStrategy = "RollingUpdate"
 }
 
 /// Storage attachment configuration
@@ -548,7 +563,14 @@ enum ResizingActivityStatus {
 enum ComputeConfigurationStatus {
     PROVISIONING = "provisioning"
     RUNNING = "running"
+    DRAINING = "draining"
     TERMINATING = "terminating"
+}
+
+/// Deployment strategy for compute updates
+enum DeploymentStrategy {
+    ROLLING_UPDATE = "RollingUpdate"
+    BLUE_GREEN = "BlueGreen"
 }
 
 // ========== Lists ==========
