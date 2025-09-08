@@ -77,6 +77,21 @@ You MUST follow all standards in `ICSCoreStandards/` directory.
 - MUST validate all designs against existing specifications
 - MUST ask for clarification if standards are unclear
 
+## 📝 PR DESCRIPTION FILE STANDARDS
+
+### STANDARDIZED FILENAME:
+- MUST always use `pr_description.md` as the standard filename
+- MUST NOT create multiple PR description files with different names
+- MUST overwrite existing `pr_description.md` for new PRs
+- MUST clean up any old PR description files with different names
+- MUST use `--body-file pr_description.md` when creating PRs
+
+### FILE MANAGEMENT:
+- MUST remove old PR description files (e.g., PR_SMITHY_DESCRIPTION.md, PR_DESCRIPTION_CORRECTED.md)
+- MUST maintain only one PR description file at a time
+- MUST update pr_description.md content for each new PR
+- MUST NOT commit multiple PR description files to repository
+
 ## 🏗️ Multi-Repository Workspace Structure
 
 This workspace supports multiple packages/repositories organized by layer:
