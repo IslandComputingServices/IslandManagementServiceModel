@@ -479,13 +479,13 @@ structure DeploymentPreferences {
     @required
     Strategy: DeploymentStrategy
 
-    /// Minimum percentage of instances that must remain healthy during deployment
-    @range(min: 50, max: 100)
-    MinHealthyPercentage: Integer = 75
+    /// How to manage healthy instances during deployment
+    @required
+    HealthyInstancesConfig: HealthyInstancesConfig
 
-    /// Maximum percentage of instances that can be replaced simultaneously
-    @range(min: 0, max: 50)
-    MaxReplacementPercentage: Integer = 25
+    /// How many instances to replace at once
+    @required
+    ReplacementBatchConfig: ReplacementBatchConfig
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
@@ -499,6 +499,52 @@ structure DeploymentPreferences {
 
     /// Rollback configuration
     RollbackConfig: RollbackConfiguration
+}
+
+/// Healthy instances configuration - choose percentage or fixed number
+union HealthyInstancesConfig {
+    /// Percentage of total capacity to keep healthy (recommended - auto-scales)
+    Percentage: HealthyPercentageConfig
+    
+    /// Fixed number of instances to keep healthy (manual - needs updates when scaling)
+    FixedCount: HealthyFixedCountConfig
+}
+
+/// Percentage-based healthy instances (auto-scales with capacity changes)
+structure HealthyPercentageConfig {
+    /// Minimum percentage of instances that must remain healthy
+    @range(min: 50, max: 100)
+    MinHealthyPercentage: Integer = 75
+}
+
+/// Fixed count healthy instances (manual management required)
+structure HealthyFixedCountConfig {
+    /// Minimum number of instances that must remain healthy
+    @range(min: 1, max: 1000)
+    MinHealthyCount: Integer
+}
+
+/// Replacement batch configuration - choose percentage or fixed number
+union ReplacementBatchConfig {
+    /// Percentage of total capacity to replace at once (recommended - auto-scales)
+    Percentage: ReplacementPercentageConfig
+    
+    /// Fixed number of instances to replace at once (manual - needs updates when scaling)
+    FixedCount: ReplacementFixedCountConfig
+}
+
+/// Percentage-based replacement batch (auto-scales with capacity changes)
+structure ReplacementPercentageConfig {
+    /// Maximum percentage of instances to replace simultaneously
+    @range(min: 10, max: 50)
+    MaxReplacementPercentage: Integer = 25
+}
+
+/// Fixed count replacement batch (manual management required)
+structure ReplacementFixedCountConfig {
+    /// Maximum number of instances to replace simultaneously
+    @range(min: 1, max: 100)
+    MaxReplacementCount: Integer = 2
 }
 
 /// Canary deployment configuration
