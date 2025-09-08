@@ -8,8 +8,8 @@ use smithy.framework#ValidationException
 
 /// ICS Island Management Service - Native service for managing compute islands
 @service(
-    sdkId: "ICS Islands"
-    endpointPrefix: "islands"
+    sdkId: "ICS Island Management"
+    endpointPrefix: "ims"
 )
 @restJson1
 @title("ICS Island Management Service")
