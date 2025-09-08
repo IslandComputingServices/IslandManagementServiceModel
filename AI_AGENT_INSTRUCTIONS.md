@@ -92,6 +92,127 @@ You MUST follow all standards in `ICSCoreStandards/` directory.
 - MUST update pr_description.md content for each new PR
 - MUST NOT commit multiple PR description files to repository
 
+## 📁 REPOSITORY DIRECTORY STRUCTURE STANDARDS
+
+### DIRECTORY PURPOSE AND ORGANIZATION:
+- **`model/`** - MUST contain Smithy IDL models, API models, service definitions
+- **`specifications/`** - MUST contain change specifications, enhancement proposals, requirements documents
+- **`src/`** - MUST contain implementation code (if present)
+- **`docs/`** - MUST contain documentation (if present)
+
+### AGENT DIRECTORY RULES:
+- MUST place Smithy IDL models in `model/` directory
+- MUST place change specifications and feature requests in `specifications/` directory
+- MUST NOT mix models with specifications
+- MUST maintain clear separation between current models and future specifications
+
+## 🧠 AGENT CONTEXT UNDERSTANDING REQUIREMENTS
+
+### MANDATORY CONTEXT ANALYSIS:
+Agent MUST read and understand ALL existing content before making ANY assumptions:
+
+#### **1. EXISTING MODELS AND SPECIFICATIONS:**
+- MUST read all files in `model/` directory to understand current service definitions
+- MUST read all files in `specifications/` directory to understand planned changes
+- MUST read all files in `src/` directory to understand implementation patterns
+- MUST analyze existing Smithy models to understand namespace hierarchy
+- MUST understand existing IRN patterns and resource naming conventions
+
+#### **2. NAMESPACE AND PACKAGE ANALYSIS:**
+- MUST extract namespace patterns from existing Smithy models (e.g., `com.islandcomputing.ims`)
+- MUST understand service abbreviations from existing code (e.g., `ims` for Island Management Service)
+- MUST analyze package structure from existing implementations
+- MUST identify naming conventions from existing resources
+- MUST NEVER assume namespace values without referencing existing patterns
+
+#### **3. IRN FORMAT UNDERSTANDING:**
+- MUST read ICS IRN format specifications from ICSCoreStandards
+- MUST analyze existing IRN patterns in models to understand service namespaces
+- MUST understand IRN hierarchy: `irn:ics:<service>:<region>:organization/<org-id>:island/<island-id>`
+- MUST identify correct service namespace from existing models (e.g., `ims` not `core`)
+- MUST NEVER assume IRN format components without verification
+
+#### **4. URL AND ENDPOINT ANALYSIS:**
+- MUST extract endpoint patterns from existing service definitions
+- MUST understand URL structure from existing API specifications
+- MUST identify region patterns (e.g., `ap-in-1`) from existing configurations
+- MUST analyze domain patterns from existing endpoints
+- MUST NEVER assume URL structure without referencing existing patterns
+
+#### **5. CONFIGURATION ATTRIBUTES:**
+Agent MUST NEVER assume values for:
+- **Service Names** - Extract from existing models and specifications
+- **SDK Names** - Reference existing service definitions
+- **Package Names** - Analyze existing code structure
+- **Email Addresses** - Always ask user or reference existing configurations
+- **Domain Names** - Extract from existing endpoint configurations
+- **Region Codes** - Reference existing IRN patterns and service definitions
+- **Organization IDs** - Use patterns from existing examples
+- **Resource Names** - Follow existing naming conventions
+
+### VERIFICATION AND CONFIRMATION PROCESS:
+
+#### **BEFORE MAKING ANY CHANGES:**
+1. **READ EXISTING CONTEXT** - Analyze all relevant files in repository
+2. **EXTRACT PATTERNS** - Identify existing naming, namespace, and structure patterns
+3. **VERIFY ASSUMPTIONS** - Cross-reference with ICS standards and existing implementations
+4. **CONFIRM WITH USER** - When patterns are unclear or missing, ask for clarification
+5. **DOCUMENT DECISIONS** - Explain reasoning based on existing patterns
+
+#### **WHEN PATTERNS ARE UNCLEAR:**
+- MUST ask user for clarification rather than assuming
+- MUST provide options based on existing patterns when asking
+- MUST explain what existing patterns were found and what is missing
+- MUST confirm understanding before proceeding
+
+#### **EXAMPLE VERIFICATION PROCESS:**
+```
+Agent Analysis:
+1. Found namespace "com.islandcomputing.ims" in existing model
+2. Found service abbreviation "ims" in @irnNamespace trait
+3. Found region "ap-in-1" in existing IRN patterns
+4. Missing: email configuration for service contact
+5. Action: Ask user for email pattern or reference existing configuration
+```
+
+### CONTEXT INFERENCE RULES:
+
+#### **SAFE TO INFER FROM EXISTING PATTERNS:**
+- Namespace structure if consistent pattern exists
+- Service abbreviations if defined in existing models
+- IRN format components if examples exist
+- URL patterns if endpoint definitions exist
+- Resource naming if conventions are established
+
+#### **MUST ALWAYS ASK USER:**
+- Email addresses and contact information
+- New service names not in existing patterns
+- Domain names not in existing configurations
+- Credentials or sensitive configuration
+- Business logic decisions not documented
+
+#### **MUST ALWAYS VERIFY:**
+- IRN format compliance with ICS standards
+- Namespace consistency across all models
+- URL structure alignment with existing services
+- Configuration attribute correctness
+
+### ERROR PREVENTION:
+
+#### **COMMON MISTAKES TO AVOID:**
+- Assuming AWS patterns when ICS is independent platform
+- Using generic values without checking existing patterns
+- Creating inconsistent namespaces across models
+- Mixing service abbreviations (e.g., using both "islands" and "ims")
+- Hardcoding configuration values without verification
+
+#### **VALIDATION CHECKLIST:**
+- [ ] All namespaces consistent with existing patterns
+- [ ] All IRN formats match ICS standards and existing examples
+- [ ] All service names align with existing definitions
+- [ ] All configuration attributes verified or confirmed with user
+- [ ] All assumptions documented and justified
+
 ## 🏗️ Multi-Repository Workspace Structure
 
 This workspace supports multiple packages/repositories organized by layer:
