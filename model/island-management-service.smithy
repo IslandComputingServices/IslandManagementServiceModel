@@ -487,6 +487,13 @@ structure DeploymentPreferences {
     @required
     ReplacementConfig: ReplacementConfig
 
+    /// Maximum capacity surge allowed during deployment
+    @range(min: 1.0, max: 3.0)
+    AllowedMaxCapacityMultiple: Double = 1.5
+
+    /// Conflict resolution strategy when healthy + replacement > allowed capacity
+    ConflictResolution: ConflictResolutionStrategy = "PRIORITIZE_HEALTHY"
+
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
     TimeoutMinutes: Integer = 30
@@ -529,6 +536,13 @@ structure ReplacementConfig {
 enum UnitType {
     PERCENTAGE = "percentage"
     COUNT = "count"
+}
+
+/// Conflict resolution strategy when healthy + replacement exceeds capacity limits
+enum ConflictResolutionStrategy {
+    PRIORITIZE_HEALTHY = "prioritize-healthy"        // Reduce replacement batch to maintain healthy count
+    PRIORITIZE_SPEED = "prioritize-speed"           // Reduce healthy count to maintain replacement batch
+    BALANCED = "balanced"                           // Reduce both proportionally to fit within limits
 }
 
 /// Canary deployment configuration
