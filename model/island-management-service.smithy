@@ -339,6 +339,12 @@ structure Island {
     /// Compute configurations (supports transition states)
     Compute: ComputeConfigurationList
 
+    /// Application deployment configurations
+    Deployments: DeploymentConfigurationList
+
+    /// Operational context and runtime state
+    OperationalConfig: OperationalConfiguration
+
     /// Storage attachments
     BlockDeviceMappings: BlockDeviceMappingList
 }
@@ -408,6 +414,237 @@ structure ComputeSpecification {
 
     /// Deployment strategy for updates
     DeploymentStrategy: DeploymentStrategy = "RollingUpdate"
+}
+
+/// Application deployment configuration
+structure DeploymentConfiguration {
+    /// Deployment version (increments with each deployment)
+    @required
+    Version: Integer
+
+    /// Application identifier
+    @required
+    @length(min: 1, max: 255)
+    ApplicationName: String
+
+    /// Container image specification
+    @required
+    Image: ContainerImage
+
+    /// Deployment preferences and constraints
+    @required
+    DeploymentPreferences: DeploymentPreferences
+
+    /// Current deployment status
+    @required
+    Status: DeploymentStatus
+
+    /// Number of instances running this deployment
+    @required
+    @range(min: 0, max: 1000)
+    RunningCount: Integer
+
+    /// Deployment start time
+    @required
+    @timestampFormat("date-time")
+    StartTime: Timestamp
+
+    /// Deployment completion time (if finished)
+    @timestampFormat("date-time")
+    CompletionTime: Timestamp
+
+    /// Deployment description or change notes
+    @length(max: 1000)
+    Description: String
+}
+
+/// Container image specification
+structure ContainerImage {
+    /// Container registry URI
+    @required
+    @pattern("^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]/[a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9]:[a-zA-Z0-9._-]+$")
+    ImageUri: String
+
+    /// Image digest for immutable reference
+    @pattern("^sha256:[a-f0-9]{64}$")
+    ImageDigest: String
+
+    /// Image pull policy
+    PullPolicy: ImagePullPolicy = "IfNotPresent"
+}
+
+/// Deployment preferences following AWS Apollo patterns
+structure DeploymentPreferences {
+    /// Deployment strategy type
+    @required
+    Strategy: DeploymentStrategy
+
+    /// Healthy percentage during rolling deployments (like AWS Apollo)
+    @range(min: 0, max: 100)
+    HealthyPercentage: Integer = 75
+
+    /// Maximum percentage of capacity that can be taken out during deployment
+    @range(min: 0, max: 100)
+    MaxUnavailablePercentage: Integer = 25
+
+    /// Deployment timeout in minutes
+    @range(min: 1, max: 1440)
+    TimeoutMinutes: Integer = 30
+
+    /// Deployment block windows (maintenance windows)
+    BlockWindows: DeploymentBlockWindowList
+
+    /// Canary deployment configuration
+    CanaryConfig: CanaryConfiguration
+
+    /// Rollback configuration
+    RollbackConfig: RollbackConfiguration
+}
+
+/// Canary deployment configuration
+structure CanaryConfiguration {
+    /// Enable canary deployment
+    Enabled: Boolean = false
+
+    /// Percentage of traffic for canary
+    @range(min: 1, max: 50)
+    TrafficPercentage: Integer = 10
+
+    /// Canary duration in minutes before full rollout
+    @range(min: 5, max: 1440)
+    DurationMinutes: Integer = 15
+
+    /// Success criteria for canary promotion
+    SuccessCriteria: CanarySuccessCriteria
+}
+
+/// Canary success criteria
+structure CanarySuccessCriteria {
+    /// Maximum error rate percentage for success
+    @range(min: 0, max: 100)
+    MaxErrorRate: Double = 5.0
+
+    /// Minimum success rate percentage for success
+    @range(min: 0, max: 100)
+    MinSuccessRate: Double = 95.0
+
+    /// Required number of successful requests
+    @range(min: 1, max: 10000)
+    MinRequestCount: Integer = 100
+}
+
+/// Rollback configuration
+structure RollbackConfiguration {
+    /// Enable automatic rollback on failure
+    AutoRollbackEnabled: Boolean = true
+
+    /// Rollback triggers
+    RollbackTriggers: RollbackTriggerList
+
+    /// Maximum rollback attempts
+    @range(min: 1, max: 10)
+    MaxRollbackAttempts: Integer = 3
+}
+
+/// Rollback trigger conditions
+structure RollbackTrigger {
+    /// Trigger type
+    @required
+    Type: RollbackTriggerType
+
+    /// Threshold value for trigger
+    @required
+    Threshold: Double
+
+    /// Duration in minutes to evaluate trigger
+    @range(min: 1, max: 60)
+    EvaluationMinutes: Integer = 5
+}
+
+/// Deployment block window (maintenance window)
+structure DeploymentBlockWindow {
+    /// Block window name
+    @required
+    @length(min: 1, max: 100)
+    Name: String
+
+    /// Start time (cron expression or ISO 8601)
+    @required
+    StartTime: String
+
+    /// End time (cron expression or ISO 8601)
+    @required
+    EndTime: String
+
+    /// Time zone for the window
+    TimeZone: String = "UTC"
+
+    /// Recurrence pattern
+    Recurrence: RecurrencePattern
+}
+
+/// Operational configuration for runtime context
+structure OperationalConfiguration {
+    /// Application environment context
+    @required
+    Environment: EnvironmentType
+
+    /// Application stage within environment
+    Stage: ApplicationStage = "stable"
+
+    /// Feature flags and toggles
+    FeatureFlags: FeatureFlagMap
+
+    /// Environment variables for applications
+    EnvironmentVariables: EnvironmentVariableMap
+
+    /// Resource quotas and limits
+    ResourceQuotas: ResourceQuotaConfiguration
+
+    /// Monitoring and observability configuration
+    ObservabilityConfig: ObservabilityConfiguration
+}
+
+/// Resource quota configuration per tenant/workload
+structure ResourceQuotaConfiguration {
+    /// Maximum CPU cores per application
+    @range(min: 0.1, max: 1000.0)
+    MaxCpuCores: Double = 4.0
+
+    /// Maximum memory in GB per application
+    @range(min: 0.1, max: 1000.0)
+    MaxMemoryGb: Double = 8.0
+
+    /// Maximum storage in GB per application
+    @range(min: 1, max: 10000)
+    MaxStorageGb: Integer = 100
+
+    /// Maximum network bandwidth in Mbps
+    @range(min: 1, max: 10000)
+    MaxNetworkMbps: Integer = 1000
+
+    /// Request rate limit per second
+    @range(min: 1, max: 100000)
+    RequestRateLimit: Integer = 1000
+}
+
+/// Observability configuration
+structure ObservabilityConfiguration {
+    /// Enable structured logging
+    LoggingEnabled: Boolean = true
+
+    /// Log level
+    LogLevel: LogLevel = "INFO"
+
+    /// Enable metrics collection
+    MetricsEnabled: Boolean = true
+
+    /// Enable distributed tracing
+    TracingEnabled: Boolean = true
+
+    /// Sampling rate for tracing (0.0 to 1.0)
+    @range(min: 0.0, max: 1.0)
+    TracingSampleRate: Double = 0.1
 }
 
 /// Storage attachment configuration
@@ -573,6 +810,54 @@ enum DeploymentStrategy {
     BLUE_GREEN = "BlueGreen"
 }
 
+/// Deployment status
+enum DeploymentStatus {
+    PENDING = "pending"
+    IN_PROGRESS = "in-progress"
+    SUCCESSFUL = "successful"
+    FAILED = "failed"
+    ROLLING_BACK = "rolling-back"
+    ROLLED_BACK = "rolled-back"
+}
+
+/// Container image pull policy
+enum ImagePullPolicy {
+    ALWAYS = "Always"
+    IF_NOT_PRESENT = "IfNotPresent"
+    NEVER = "Never"
+}
+
+/// Application stage within environment
+enum ApplicationStage {
+    CANARY = "canary"
+    STABLE = "stable"
+    DEPRECATED = "deprecated"
+}
+
+/// Rollback trigger types
+enum RollbackTriggerType {
+    ERROR_RATE = "ErrorRate"
+    RESPONSE_TIME = "ResponseTime"
+    HEALTH_CHECK_FAILURE = "HealthCheckFailure"
+    CUSTOM_METRIC = "CustomMetric"
+}
+
+/// Recurrence pattern for block windows
+enum RecurrencePattern {
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    NONE = "none"
+}
+
+/// Log levels
+enum LogLevel {
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARN = "WARN"
+    ERROR = "ERROR"
+}
+
 // ========== Lists ==========
 
 list IslandIdList {
@@ -601,6 +886,28 @@ list IslandStateChangeList {
 
 list ComputeConfigurationList {
     member: ComputeConfiguration
+}
+
+list DeploymentConfigurationList {
+    member: DeploymentConfiguration
+}
+
+list DeploymentBlockWindowList {
+    member: DeploymentBlockWindow
+}
+
+list RollbackTriggerList {
+    member: RollbackTrigger
+}
+
+map FeatureFlagMap {
+    key: String
+    value: Boolean
+}
+
+map EnvironmentVariableMap {
+    key: String
+    value: String
 }
 
 // ========== Error Structures ==========
