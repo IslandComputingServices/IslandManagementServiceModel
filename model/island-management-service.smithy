@@ -365,7 +365,7 @@ structure ComputeConfiguration {
     DesiredCapacity: Integer
 
     /// Health check type
-    HealthCheckType: HealthCheckType = "ELB"
+    HealthCheckType: HealthCheckType = "ILB"
 
     /// Health check grace period in seconds
     @range(min: 0, max: 7200)
@@ -397,13 +397,13 @@ structure BlockDeviceMapping {
     @required
     DeviceName: String
 
-    /// EBS configuration
+    /// IBS configuration
     @required
-    Ebs: EbsBlockDevice
+    Ibs: IbsBlockDevice
 }
 
-/// EBS block device configuration
-structure EbsBlockDevice {
+/// IBS block device configuration
+structure IbsBlockDevice {
     /// Volume size in GB (local storage at hypervisor level)
     @required
     @range(min: 1, max: 16384)
@@ -515,7 +515,7 @@ enum InstanceType {
 
 /// Health check types
 enum HealthCheckType {
-    ELB = "ELB"
+    ILB = "ILB"
     ICS = "ICS"
 }
 
