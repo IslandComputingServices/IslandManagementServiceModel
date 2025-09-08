@@ -28,7 +28,7 @@ service IslandManagementService {
         DescribeIslands
         ModifyIsland
         TerminateIslands
-        ScaleIsland
+        ResizeIsland
     ]
     errors: [
         ValidationException
@@ -111,12 +111,12 @@ operation TerminateIslands {
     ]
 }
 
-/// Scale island compute capacity
+/// Resize island compute capacity (scale up or down)
 @http(method: "POST", uri: "/")
 @idempotent
-operation ScaleIsland {
-    input: ScaleIslandRequest
-    output: ScaleIslandResponse
+operation ResizeIsland {
+    input: ResizeIslandRequest
+    output: ResizeIslandResponse
     errors: [
         InvalidParameterException
         ResourceNotFoundException
@@ -222,17 +222,17 @@ structure TerminateIslandsRequest {
 }
 
 @input
-structure ScaleIslandRequest {
+structure ResizeIslandRequest {
     /// The action to perform
     @required
-    Action: String = "ScaleIsland"
+    Action: String = "ResizeIsland"
 
-    /// Island IRN to scale
+    /// Island IRN to resize
     @required
     @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
     IslandId: String
 
-    /// Compute scaling configuration
+    /// Compute resizing configuration
     Compute: ComputeSpecification
 
     /// Idempotency token for safe retries
@@ -290,10 +290,10 @@ structure TerminateIslandsResponse {
 }
 
 @output
-structure ScaleIslandResponse {
-    /// Scaling activity information
+structure ResizeIslandResponse {
+    /// Resizing activity information
     @required
-    ScalingActivity: ScalingActivity
+    ResizingActivity: ResizingActivity
 
     /// Response metadata
     @required
@@ -336,8 +336,8 @@ structure Island {
     @timestampFormat("date-time")
     LaunchTime: Timestamp
 
-    /// Compute configuration
-    Compute: ComputeConfiguration
+    /// Compute configurations (supports transition states)
+    Compute: ComputeConfigurationList
 
     /// Storage attachments
     BlockDeviceMappings: BlockDeviceMappingList
@@ -363,6 +363,10 @@ structure ComputeConfiguration {
     @required
     @range(min: 0, max: 1000)
     DesiredCapacity: Integer
+
+    /// Configuration status
+    @required
+    Status: ComputeConfigurationStatus
 
     /// Health check type
     HealthCheckType: HealthCheckType = "ILB"
@@ -455,8 +459,8 @@ structure IslandStateInfo {
     Name: String
 }
 
-/// Scaling activity information
-structure ScalingActivity {
+/// Resizing activity information
+structure ResizingActivity {
     /// Activity IRN
     @required
     @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+:resource/[a-zA-Z0-9-]+$")
@@ -464,7 +468,7 @@ structure ScalingActivity {
 
     /// Activity status
     @required
-    Status: ScalingActivityStatus
+    Status: ResizingActivityStatus
 
     /// Activity start time
     @required
@@ -490,6 +494,7 @@ enum IslandState {
     PENDING = "pending"
     PROVISIONING = "provisioning"
     RUNNING = "running"
+    UPDATING = "updating"
     STOPPING = "stopping"
     STOPPED = "stopped"
     SHUTTING_DOWN = "shutting-down"
@@ -531,12 +536,19 @@ enum FilterName {
     INSTANCE_TYPE = "instance-type"
 }
 
-/// Scaling activity status
-enum ScalingActivityStatus {
+/// Resizing activity status
+enum ResizingActivityStatus {
     IN_PROGRESS = "InProgress"
     SUCCESSFUL = "Successful"
     CANCELLED = "Cancelled"
     FAILED = "Failed"
+}
+
+/// Compute configuration status
+enum ComputeConfigurationStatus {
+    PROVISIONING = "provisioning"
+    RUNNING = "running"
+    TERMINATING = "terminating"
 }
 
 // ========== Lists ==========
@@ -563,6 +575,10 @@ list FilterValueList {
 
 list IslandStateChangeList {
     member: IslandStateChange
+}
+
+list ComputeConfigurationList {
+    member: ComputeConfiguration
 }
 
 // ========== Error Structures ==========
