@@ -479,13 +479,13 @@ structure DeploymentPreferences {
     @required
     Strategy: DeploymentStrategy
 
-    /// How to manage healthy instances during deployment
+    /// Healthy instances configuration
     @required
-    HealthyInstancesConfig: HealthyInstancesConfig
+    HealthyConfig: HealthyConfig
 
-    /// How many instances to replace at once
+    /// Replacement batch configuration
     @required
-    ReplacementBatchConfig: ReplacementBatchConfig
+    ReplacementConfig: ReplacementConfig
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
@@ -501,50 +501,34 @@ structure DeploymentPreferences {
     RollbackConfig: RollbackConfiguration
 }
 
-/// Healthy instances configuration - choose percentage or fixed number
-union HealthyInstancesConfig {
-    /// Percentage of total capacity to keep healthy (recommended - auto-scales)
-    Percentage: HealthyPercentageConfig
-    
-    /// Fixed number of instances to keep healthy (manual - needs updates when scaling)
-    FixedCount: HealthyFixedCountConfig
-}
+/// Healthy instances configuration
+structure HealthyConfig {
+    /// Unit type for healthy instance specification
+    @required
+    UnitType: UnitType = "PERCENTAGE"
 
-/// Percentage-based healthy instances (auto-scales with capacity changes)
-structure HealthyPercentageConfig {
-    /// Minimum percentage of instances that must remain healthy
-    @range(min: 50, max: 100)
-    MinHealthyPercentage: Integer = 75
-}
-
-/// Fixed count healthy instances (manual management required)
-structure HealthyFixedCountConfig {
-    /// Minimum number of instances that must remain healthy
+    /// Minimum healthy value (percentage if UnitType=PERCENTAGE, count if UnitType=COUNT)
+    @required
     @range(min: 1, max: 1000)
-    MinHealthyCount: Integer
+    MinHealthyValue: Integer = 75
 }
 
-/// Replacement batch configuration - choose percentage or fixed number
-union ReplacementBatchConfig {
-    /// Percentage of total capacity to replace at once (recommended - auto-scales)
-    Percentage: ReplacementPercentageConfig
-    
-    /// Fixed number of instances to replace at once (manual - needs updates when scaling)
-    FixedCount: ReplacementFixedCountConfig
-}
+/// Replacement batch configuration
+structure ReplacementConfig {
+    /// Unit type for replacement batch specification
+    @required
+    UnitType: UnitType = "PERCENTAGE"
 
-/// Percentage-based replacement batch (auto-scales with capacity changes)
-structure ReplacementPercentageConfig {
-    /// Maximum percentage of instances to replace simultaneously
-    @range(min: 10, max: 50)
-    MaxReplacementPercentage: Integer = 25
-}
-
-/// Fixed count replacement batch (manual management required)
-structure ReplacementFixedCountConfig {
-    /// Maximum number of instances to replace simultaneously
+    /// Maximum replacement value (percentage if UnitType=PERCENTAGE, count if UnitType=COUNT)
+    @required
     @range(min: 1, max: 100)
-    MaxReplacementCount: Integer = 2
+    MaxReplacementValue: Integer = 25
+}
+
+/// Unit type for deployment configuration values
+enum UnitType {
+    PERCENTAGE = "percentage"
+    COUNT = "count"
 }
 
 /// Canary deployment configuration
