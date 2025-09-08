@@ -487,10 +487,10 @@ structure DeploymentPreferences {
     @range(min: 0, max: 100)
     MinHealthyPercentage: Integer = 75
 
-    /// Maximum percentage of total capacity allowed during deployment (for surge capacity)
+    /// Maximum additional capacity percentage allowed during deployment (0% = no extra cost, 100% = double capacity)
     @required
-    @range(min: 100, max: 300)
-    MaxCapacityPercentage: Integer = 150
+    @range(min: 0, max: 200)
+    AllowedMaxAdditionalCapacityPercentage: Integer = 50
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
