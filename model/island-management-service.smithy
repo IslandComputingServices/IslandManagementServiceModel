@@ -159,6 +159,9 @@ structure LaunchIslandRequest {
     /// Storage attachments
     BlockDeviceMappings: BlockDeviceMappingList
 
+    /// Deployment configuration (optional - reasonable defaults applied if not specified)
+    DeploymentConfig: DeploymentPreferences
+
     /// Idempotency token for safe retries
     @idempotencyToken
     IdempotencyToken: String
@@ -473,18 +476,21 @@ structure ContainerImage {
     PullPolicy: ImagePullPolicy = "IfNotPresent"
 }
 
-/// Deployment preferences for application updates
+/// Deployment preferences - all configuration in one place
 structure DeploymentPreferences {
-    /// Deployment strategy type
+    /// Deployment type - rolling or blue-green
     @required
-    Strategy: DeploymentStrategy
+    DeploymentType: DeploymentType = "ROLLING"
 
-    /// Deployment mode - clear outcomes customers can understand and predict
+    /// Minimum percentage of instances that must stay healthy during deployment
     @required
-    DeploymentMode: DeploymentMode = "MINIMAL_RISK"
+    @range(min: 0, max: 100)
+    MinHealthyPercentage: Integer = 75
 
-    /// Advanced configuration (optional - overrides deployment mode defaults)
-    AdvancedConfig: AdvancedDeploymentConfig
+    /// Maximum percentage of total capacity allowed during deployment (for surge capacity)
+    @required
+    @range(min: 100, max: 300)
+    MaxCapacityPercentage: Integer = 150
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
@@ -498,51 +504,6 @@ structure DeploymentPreferences {
 
     /// Rollback configuration
     RollbackConfig: RollbackConfiguration
-}
-
-/// Advanced deployment configuration for customers who want fine-grained control
-structure AdvancedDeploymentConfig {
-    /// Healthy instances configuration (overrides deployment mode default)
-    HealthyConfig: HealthyConfig
-
-    /// Replacement batch configuration (overrides deployment mode default)
-    ReplacementConfig: ReplacementConfig
-
-    /// Maximum temporary instances during deployment (e.g., 15 means max 15 total instances)
-    MaxTemporaryInstances: Integer
-
-    /// OR: Maximum cost increase during deployment (e.g., 50 means max 50% cost increase)
-    MaxCostIncreasePercentage: Integer
-}
-
-/// Healthy instances configuration
-structure HealthyConfig {
-    /// Unit type for healthy instance specification
-    @required
-    UnitType: UnitType = "PERCENTAGE"
-
-    /// Minimum healthy value (percentage if UnitType=PERCENTAGE, count if UnitType=COUNT)
-    @required
-    @range(min: 1, max: 1000)
-    MinHealthyValue: Integer = 75
-}
-
-/// Replacement batch configuration
-structure ReplacementConfig {
-    /// Unit type for replacement batch specification
-    @required
-    UnitType: UnitType = "PERCENTAGE"
-
-    /// Maximum replacement value (percentage if UnitType=PERCENTAGE, count if UnitType=COUNT)
-    @required
-    @range(min: 1, max: 100)
-    MaxReplacementValue: Integer = 25
-}
-
-/// Unit type for deployment configuration values
-enum UnitType {
-    PERCENTAGE = "percentage"
-    COUNT = "count"
 }
 
 /// Deployment mode - clear outcomes customers can understand and predict
@@ -853,6 +814,12 @@ enum ComputeConfigurationStatus {
     RUNNING = "running"
     DRAINING = "draining"
     TERMINATING = "terminating"
+}
+
+/// Deployment type
+enum DeploymentType {
+    ROLLING = "rolling"         // Rolling deployment - replace instances gradually
+    BLUE_GREEN = "blue-green"   // Blue-green deployment - full environment switch
 }
 
 /// Deployment strategy for compute updates
