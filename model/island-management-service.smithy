@@ -483,17 +483,8 @@ structure DeploymentPreferences {
     @required
     DeploymentMode: DeploymentMode = "MINIMAL_RISK"
 
-    /// Healthy instances configuration
-    @required
-    HealthyConfig: HealthyConfig
-
-    /// Replacement batch configuration
-    @required
-    ReplacementConfig: ReplacementConfig
-
-    /// Maximum capacity surge allowed during deployment
-    @range(min: 1.0, max: 3.0)
-    AllowedMaxCapacityMultiple: Double = 1.5
+    /// Advanced configuration (optional - overrides deployment mode defaults)
+    AdvancedConfig: AdvancedDeploymentConfig
 
     /// Deployment timeout in minutes
     @range(min: 1, max: 1440)
@@ -507,6 +498,21 @@ structure DeploymentPreferences {
 
     /// Rollback configuration
     RollbackConfig: RollbackConfiguration
+}
+
+/// Advanced deployment configuration for customers who want fine-grained control
+structure AdvancedDeploymentConfig {
+    /// Healthy instances configuration (overrides deployment mode default)
+    HealthyConfig: HealthyConfig
+
+    /// Replacement batch configuration (overrides deployment mode default)
+    ReplacementConfig: ReplacementConfig
+
+    /// Maximum temporary instances during deployment (e.g., 15 means max 15 total instances)
+    MaxTemporaryInstances: Integer
+
+    /// OR: Maximum cost increase during deployment (e.g., 50 means max 50% cost increase)
+    MaxCostIncreasePercentage: Integer
 }
 
 /// Healthy instances configuration
