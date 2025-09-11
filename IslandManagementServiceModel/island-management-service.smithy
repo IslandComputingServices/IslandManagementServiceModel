@@ -22,13 +22,15 @@ structure irnNamespace {
 @restJson1
 @title("ICS Island Management Service")
 service IslandManagementService {
-    version: "2025-09-08"
+    version: "2025-09-11"
     operations: [
         LaunchIsland
         DescribeIslands
         ModifyIsland
         TerminateIslands
         ResizeIsland
+        ConnectIslands
+        DisconnectIslands
     ]
     errors: [
         ValidationException
@@ -117,6 +119,45 @@ operation TerminateIslands {
 operation ResizeIsland {
     input: ResizeIslandRequest
     output: ResizeIslandResponse
+    errors: [
+        InvalidParameterException
+        ResourceNotFoundException
+        UnauthorizedException
+        AccessDeniedException
+        ThrottlingException
+        InternalServerException
+    ]
+}
+
+/// Connect islands to allow one-way communication from source to target
+/// 
+/// This creates a ONE-WAY connection allowing the source island to make 
+/// requests to the target island.
+/// 
+/// For two-way communication, make two separate ConnectIslands calls.
+/// However, you must think twice before creating a cyclic dependency
+/// as it can lead to complex failure scenarios and tight coupling.
+@http(method: "POST", uri: "/")
+@idempotent
+operation ConnectIslands {
+    input: ConnectIslandsRequest
+    output: ConnectIslandsResponse
+    errors: [
+        InvalidParameterException
+        ResourceNotFoundException
+        UnauthorizedException
+        AccessDeniedException
+        ThrottlingException
+        InternalServerException
+    ]
+}
+
+/// Disconnect islands by removing communication rules
+@http(method: "POST", uri: "/")
+@idempotent
+operation DisconnectIslands {
+    input: DisconnectIslandsRequest
+    output: DisconnectIslandsResponse
     errors: [
         InvalidParameterException
         ResourceNotFoundException
@@ -240,6 +281,55 @@ structure ResizeIslandRequest {
     IdempotencyToken: String
 }
 
+@input
+structure ConnectIslandsRequest {
+    /// The action to perform
+    @required
+    Action: String = "ConnectIslands"
+
+    /// Source island that will make requests (client)
+    @required
+    @pattern("^isl-[a-zA-Z0-9]+$")
+    SourceIslandId: String
+    
+    /// Target island that will receive requests (server)
+    @required
+    @pattern("^isl-[a-zA-Z0-9]+$")
+    TargetIslandId: String
+    
+    /// API patterns that source can access on target
+    /// Examples: ["*"], ["/api/users/*", "/v1/payments"]
+    AllowedAPIs: APIPatternList = ["*"]
+    
+    /// Rate limit for source→target requests
+    RateLimit: RateLimitConfiguration
+    
+    /// Idempotency token for safe retries
+    @idempotencyToken
+    IdempotencyToken: String
+}
+
+@input
+structure DisconnectIslandsRequest {
+    /// The action to perform
+    @required
+    Action: String = "DisconnectIslands"
+
+    /// Source island identifier
+    @required
+    @pattern("^isl-[a-zA-Z0-9]+$")
+    SourceIslandId: String
+    
+    /// Target island identifier
+    @required
+    @pattern("^isl-[a-zA-Z0-9]+$")
+    TargetIslandId: String
+    
+    /// Idempotency token for safe retries
+    @idempotencyToken
+    IdempotencyToken: String
+}
+
 // ========== Response Structures ==========
 
 @output
@@ -300,6 +390,28 @@ structure ResizeIslandResponse {
     ResponseMetadata: ResponseMetadata
 }
 
+@output
+structure ConnectIslandsResponse {
+    /// One-way connection details
+    @required
+    Connection: IslandConnection
+    
+    /// Response metadata
+    @required
+    ResponseMetadata: ResponseMetadata
+}
+
+@output
+structure DisconnectIslandsResponse {
+    /// Disconnection confirmation
+    @required
+    Disconnected: Boolean
+
+    /// Response metadata
+    @required
+    ResponseMetadata: ResponseMetadata
+}
+
 // ========== Core Data Structures ==========
 
 /// Core island resource model
@@ -350,6 +462,11 @@ structure Island {
 
     /// Storage attachments
     BlockDeviceMappings: BlockDeviceMappingList
+
+    /// SSA Configuration ID (managed by SSA Configuration Management Service)
+    @required
+    @pattern("^irn:ics:ssacms:[a-z0-9-]+:organization/[a-zA-Z0-9-]+:ssa-config/[a-zA-Z0-9-]+$")
+    SSAConfigId: String
 }
 
 /// Compute configuration for island
@@ -386,9 +503,6 @@ structure ComputeConfiguration {
     @required
     Status: ComputeConfigurationStatus
 
-    /// Deployment strategy for this configuration
-    DeploymentStrategy: DeploymentStrategy
-
     /// Health check type
     HealthCheckType: HealthCheckType = "ILB"
 
@@ -415,195 +529,14 @@ structure ComputeSpecification {
     @range(min: 0, max: 1000)
     DesiredCapacity: Integer
 
-    /// Deployment strategy for updates
-    DeploymentStrategy: DeploymentStrategy = "RollingUpdate"
 }
 
-/// Application deployment configuration
-structure DeploymentConfiguration {
-    /// Deployment version (increments with each deployment)
-    @required
-    Version: Integer
 
-    /// Application identifier
-    @required
-    @length(min: 1, max: 255)
-    ApplicationName: String
 
-    /// Container image specification
-    @required
-    Image: ContainerImage
 
-    /// Deployment preferences and constraints
-    @required
-    DeploymentPreferences: DeploymentPreferences
 
-    /// Current deployment status
-    @required
-    Status: DeploymentStatus
 
-    /// Number of instances running this deployment
-    @required
-    @range(min: 0, max: 1000)
-    RunningCount: Integer
 
-    /// Deployment start time
-    @required
-    @timestampFormat("date-time")
-    StartTime: Timestamp
-
-    /// Deployment completion time (if finished)
-    @timestampFormat("date-time")
-    CompletionTime: Timestamp
-
-    /// Deployment description or change notes
-    @length(max: 1000)
-    Description: String
-}
-
-/// Container image specification
-structure ContainerImage {
-    /// Container registry URI
-    @required
-    @pattern("^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]/[a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9]:[a-zA-Z0-9._-]+$")
-    ImageUri: String
-
-    /// Image digest for immutable reference
-    @pattern("^sha256:[a-f0-9]{64}$")
-    ImageDigest: String
-
-    /// Image pull policy
-    PullPolicy: ImagePullPolicy = "IfNotPresent"
-}
-
-/// Deployment preferences - all configuration in one place
-/// 
-/// Business Rules:
-/// - BLUE_GREEN deployments require MinHealthyPercentage=100% and MaxAllowedAdditionalCapacityPercentage=100%
-/// - RESIZING deployments ignore MaxAllowedAdditionalCapacityPercentage validation (capacity change operations)
-/// - System automatically sets DeploymentType=RESIZING when target capacity differs from current capacity
-/// - MinHealthyPercentage calculated from current capacity for resizing operations (prevents cost explosion)
-structure DeploymentPreferences {
-    /// Deployment type - rolling, blue-green, or resizing
-    /// System automatically sets to RESIZING when capacity change detected
-    @required
-    DeploymentType: DeploymentType = "ROLLING"
-
-    /// Minimum percentage of instances that must stay healthy during deployment
-    /// For resizing: calculated from current_capacity (prevents cost explosion)
-    @required
-    @range(min: 0, max: 100)
-    MinHealthyPercentage: Integer = 75
-
-    /// Maximum allowed additional capacity percentage during deployment 
-    /// (calculated from the higher of current or target capacity to support scaling operations)
-    /// Ignored for SCALING deployment type
-    @required
-    @range(min: 0, max: 200)
-    MaxAllowedAdditionalCapacityPercentage: Integer = 50
-
-    /// Deployment timeout in minutes
-    @range(min: 1, max: 1440)
-    TimeoutMinutes: Integer = 30
-
-    /// Deployment block windows (maintenance windows)
-    BlockWindows: DeploymentBlockWindowList
-
-    /// Canary deployment configuration
-    CanaryConfig: CanaryConfiguration
-
-    /// Rollback configuration
-    RollbackConfig: RollbackConfiguration
-}
-
-/// Deployment mode - clear outcomes customers can understand and predict
-enum DeploymentMode {
-    ZERO_DOWNTIME = "zero-downtime"      // Guarantee no service interruption (may cost 2x during deployment)
-    MINIMAL_RISK = "minimal-risk"        // Keep 90% capacity, replace 10% at a time (may cost 1.1x during deployment)  
-    COST_OPTIMIZED = "cost-optimized"    // No extra cost, replace instances one-by-one (slower deployment)
-}
-
-/// Canary deployment configuration
-structure CanaryConfiguration {
-    /// Enable canary deployment
-    Enabled: Boolean = false
-
-    /// Percentage of traffic for canary
-    @range(min: 1, max: 50)
-    TrafficPercentage: Integer = 10
-
-    /// Canary duration in minutes before full rollout
-    @range(min: 5, max: 1440)
-    DurationMinutes: Integer = 15
-
-    /// Success criteria for canary promotion
-    SuccessCriteria: CanarySuccessCriteria
-}
-
-/// Canary success criteria
-structure CanarySuccessCriteria {
-    /// Maximum error rate percentage for success
-    @range(min: 0, max: 100)
-    MaxErrorRate: Double = 5.0
-
-    /// Minimum success rate percentage for success
-    @range(min: 0, max: 100)
-    MinSuccessRate: Double = 95.0
-
-    /// Required number of successful requests
-    @range(min: 1, max: 10000)
-    MinRequestCount: Integer = 100
-}
-
-/// Rollback configuration
-structure RollbackConfiguration {
-    /// Enable automatic rollback on failure
-    AutoRollbackEnabled: Boolean = true
-
-    /// Rollback triggers
-    RollbackTriggers: RollbackTriggerList
-
-    /// Maximum rollback attempts
-    @range(min: 1, max: 10)
-    MaxRollbackAttempts: Integer = 3
-}
-
-/// Rollback trigger conditions
-structure RollbackTrigger {
-    /// Trigger type
-    @required
-    Type: RollbackTriggerType
-
-    /// Threshold value for trigger
-    @required
-    Threshold: Double
-
-    /// Duration in minutes to evaluate trigger
-    @range(min: 1, max: 60)
-    EvaluationMinutes: Integer = 5
-}
-
-/// Deployment block window (maintenance window)
-structure DeploymentBlockWindow {
-    /// Block window name
-    @required
-    @length(min: 1, max: 100)
-    Name: String
-
-    /// Start time (cron expression or ISO 8601)
-    @required
-    StartTime: String
-
-    /// End time (cron expression or ISO 8601)
-    @required
-    EndTime: String
-
-    /// Time zone for the window
-    TimeZone: String = "UTC"
-
-    /// Recurrence pattern
-    Recurrence: RecurrencePattern
-}
 
 /// Operational configuration for runtime context
 structure OperationalConfiguration {
@@ -755,6 +688,207 @@ structure IbsBlockDevice {
     DeleteOnTermination: Boolean = true
 }
 
+/// Network configuration for Envoy service mesh
+structure NetworkConfiguration {
+    /// Service mesh identity
+    @required
+    ServiceIdentity: ServiceIdentity
+
+    /// Service discovery configuration
+    ServiceDiscovery: ServiceDiscoveryConfig
+
+    /// Public access configuration
+    PublicAccess: PublicAccessConfig
+
+    /// Service communication policies
+    CommunicationPolicies: CommunicationPolicyList
+}
+
+/// Service identity in Envoy mesh
+structure ServiceIdentity {
+    /// Service name (same as Island ID)
+    @required
+    @pattern("^isl-[a-zA-Z0-9]+$")
+    ServiceName: String
+
+    /// Service port for communication
+    @required
+    @range(min: 1, max: 65535)
+    ServicePort: Integer = 8080
+
+    /// Service protocol
+    @required
+    Protocol: ServiceProtocol = "HTTP"
+
+    /// Service version for routing
+    ServiceVersion: String = "v1.0"
+
+    /// Service tags for metadata
+    ServiceTags: ServiceTagList
+}
+
+/// Service discovery configuration
+structure ServiceDiscoveryConfig {
+    /// Health check configuration
+    @required
+    HealthCheck: HealthCheckConfig
+
+    /// Load balancing weight
+    @range(min: 1, max: 1000)
+    Weight: Integer = 100
+
+    /// Service metadata
+    ServiceMetadata: ServiceMetadataMap
+}
+
+/// Health check configuration
+structure HealthCheckConfig {
+    /// Health check type
+    @required
+    CheckType: HealthCheckType = "HTTP"
+
+    /// Health check endpoint
+    HealthCheckPath: String = "/health"
+
+    /// Check interval in seconds
+    @range(min: 5, max: 300)
+    CheckInterval: Integer = 10
+
+    /// Check timeout in seconds
+    @range(min: 1, max: 60)
+    CheckTimeout: Integer = 3
+}
+
+/// Public access configuration
+structure PublicAccessConfig {
+    /// Enable public internet access
+    Enabled: Boolean = false
+
+    /// Public IP allocation
+    PublicIP: PublicIPConfig
+
+    /// DNS configuration
+    DNSConfig: DNSConfiguration
+
+    /// TLS configuration for HTTPS
+    TLSConfig: TLSConfiguration
+}
+
+/// Public IP configuration
+structure PublicIPConfig {
+    /// IP allocation type
+    AllocationType: IPAllocationType = "DYNAMIC"
+
+    /// Static IP address (if STATIC)
+    StaticIP: String
+
+    /// Load balancing configuration
+    LoadBalancing: LoadBalancingConfig
+}
+
+/// DNS configuration
+structure DNSConfiguration {
+    /// Custom domain name
+    DomainName: String
+
+    /// DNS record TTL in seconds
+    @range(min: 60, max: 86400)
+    TTL: Integer = 300
+
+    /// DNS record type
+    RecordType: DNSRecordType = "A"
+}
+
+/// TLS configuration
+structure TLSConfiguration {
+    /// TLS certificate source
+    CertificateSource: CertificateSource = "AUTO"
+
+    /// Custom certificate ARN (if CUSTOM)
+    CustomCertificateArn: String
+
+    /// TLS version
+    TLSVersion: TLSVersion = "TLS_1_3"
+}
+
+/// Load balancing configuration
+structure LoadBalancingConfig {
+    /// Load balancing algorithm
+    Algorithm: LoadBalancingAlgorithm = "ROUND_ROBIN"
+
+    /// Health check for load balancing
+    HealthCheckEnabled: Boolean = true
+
+    /// Session affinity
+    SessionAffinity: SessionAffinityType = "NONE"
+}
+
+/// Security configuration for mTLS and policies
+structure SecurityConfiguration {
+    /// mTLS configuration (REQUIRED - Envoy mesh security)
+    @required
+    MTLSConfig: MTLSConfiguration
+
+    /// Communication policies (REQUIRED - access control)
+    CommunicationPolicies: CommunicationPolicyList
+
+    /// Request timeout policies (SIMPLE - replaces circuit breakers)
+    TimeoutPolicies: TimeoutPolicyList
+
+    /// Rate limiting policies (OPTIONAL - protection)
+    RateLimitPolicies: RateLimitPolicyList
+}
+
+/// mTLS configuration
+structure MTLSConfiguration {
+    /// Enable mTLS for service communication
+    @required
+    Enabled: Boolean = true
+
+    /// Certificate rotation interval in hours
+    @range(min: 1, max: 168)
+    CertificateRotationHours: Integer = 24
+}
+
+/// Service communication policy
+structure CommunicationPolicy {
+    /// Target service pattern (e.g., "public", "ics-services", "org-123-*")
+    @required
+    TargetServicePattern: String
+
+    /// Policy action
+    @required
+    Action: PolicyAction
+}
+
+/// Request timeout policy
+structure TimeoutPolicy {
+    /// Target service pattern
+    @required
+    TargetServicePattern: String
+
+    /// Request timeout in seconds
+    @required
+    @range(min: 1, max: 300)
+    TimeoutSeconds: Integer = 5
+
+    /// Connection timeout in seconds
+    @range(min: 1, max: 30)
+    ConnectionTimeoutSeconds: Integer = 2
+}
+
+/// Rate limiting policy
+structure RateLimitPolicy {
+    /// Requests per second limit
+    @required
+    @range(min: 1, max: 1000000)
+    RequestsPerSecond: Integer
+
+    /// Burst capacity
+    @range(min: 1, max: 10000)
+    BurstCapacity: Integer = 100
+}
+
 /// Filter for describe operations
 structure Filter {
     /// Filter name
@@ -811,6 +945,45 @@ structure ResizingActivity {
 
     /// Activity description
     Description: String
+}
+
+/// Island connection information
+structure IslandConnection {
+    /// Source island (client)
+    @required
+    SourceIslandId: String
+    
+    /// Target island (server)
+    @required
+    TargetIslandId: String
+    
+    /// Allowed API patterns on target
+    @required
+    AllowedAPIs: APIPatternList
+    
+    /// Rate limit for source→target requests
+    RateLimit: RateLimitConfiguration
+    
+    /// Connection status
+    @required
+    Status: ConnectionStatus
+    
+    /// Connection creation time
+    @required
+    @timestampFormat("date-time")
+    CreatedTime: Timestamp
+}
+
+/// Rate limit configuration for connections
+structure RateLimitConfiguration {
+    /// Requests per second limit
+    @required
+    @range(min: 1, max: 1000000)
+    RequestsPerSecond: Integer = 1000
+
+    /// Burst capacity
+    @range(min: 1, max: 10000)
+    BurstCapacity: Integer = 100
 }
 
 /// Response metadata
@@ -886,65 +1059,65 @@ enum ComputeConfigurationStatus {
     TERMINATING = "terminating"
 }
 
-/// Deployment type
-enum DeploymentType {
-    ROLLING = "rolling"         // Rolling deployment - replace instances gradually
-    BLUE_GREEN = "blue-green"   // Blue-green deployment - full environment switch
-    RESIZING = "resizing"       // Resizing deployment - capacity change (MaxAllowedAdditionalCapacityPercentage check ignored)
-}
-
-/// Deployment strategy for compute updates
-enum DeploymentStrategy {
-    ROLLING_UPDATE = "RollingUpdate"
-    BLUE_GREEN = "BlueGreen"
-}
-
-/// Deployment status
-enum DeploymentStatus {
-    PENDING = "pending"
-    IN_PROGRESS = "in-progress"
-    SUCCESSFUL = "successful"
-    FAILED = "failed"
-    ROLLING_BACK = "rolling-back"
-    ROLLED_BACK = "rolled-back"
-}
-
-/// Container image pull policy
-enum ImagePullPolicy {
-    ALWAYS = "Always"
-    IF_NOT_PRESENT = "IfNotPresent"
-    NEVER = "Never"
-}
-
-/// Application stage within environment
-enum ApplicationStage {
-    CANARY = "canary"
-    STABLE = "stable"
-    DEPRECATED = "deprecated"
-}
-
-/// Rollback trigger types
-enum RollbackTriggerType {
-    ERROR_RATE = "ErrorRate"
-    RESPONSE_TIME = "ResponseTime"
-    HEALTH_CHECK_FAILURE = "HealthCheckFailure"
-    CUSTOM_METRIC = "CustomMetric"
-}
-
-/// Recurrence pattern for block windows
-enum RecurrencePattern {
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    NONE = "none"
-}
-
 /// Log levels
 enum LogLevel {
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARN = "WARN"
     ERROR = "ERROR"
+}
+
+/// Service protocol types
+enum ServiceProtocol {
+    HTTP = "HTTP"
+    HTTPS = "HTTPS"
+    GRPC = "gRPC"
+    TCP = "TCP"
+}
+
+/// IP allocation types
+enum IPAllocationType {
+    DYNAMIC = "dynamic"
+    STATIC = "static"
+}
+
+/// DNS record types
+enum DNSRecordType {
+    A = "A"
+    AAAA = "AAAA"
+    CNAME = "CNAME"
+}
+
+/// Certificate source types
+enum CertificateSource {
+    AUTO = "auto"
+    CUSTOM = "custom"
+}
+
+/// TLS version types
+enum TLSVersion {
+    TLS_1_2 = "TLS_1_2"
+    TLS_1_3 = "TLS_1_3"
+}
+
+/// Load balancing algorithms
+enum LoadBalancingAlgorithm {
+    ROUND_ROBIN = "round_robin"
+    LEAST_CONNECTIONS = "least_connections"
+    WEIGHTED_ROUND_ROBIN = "weighted_round_robin"
+}
+
+/// Session affinity types
+enum SessionAffinityType {
+    NONE = "none"
+    CLIENT_IP = "client_ip"
+    COOKIE = "cookie"
+}
+
+/// Policy actions
+enum PolicyAction {
+    ALLOW = "allow"
+    DENY = "deny"
 }
 
 // ========== Lists ==========
@@ -977,24 +1150,33 @@ list ComputeConfigurationList {
     member: ComputeConfiguration
 }
 
-list DeploymentConfigurationList {
-    member: DeploymentConfiguration
-}
-
-list DeploymentBlockWindowList {
-    member: DeploymentBlockWindow
-}
-
-list RollbackTriggerList {
-    member: RollbackTrigger
-}
-
 map FeatureFlagMap {
     key: String
     value: Boolean
 }
 
 map EnvironmentVariableMap {
+    key: String
+    value: String
+}
+
+list ServiceTagList {
+    member: String
+}
+
+list CommunicationPolicyList {
+    member: CommunicationPolicy
+}
+
+list TimeoutPolicyList {
+    member: TimeoutPolicy
+}
+
+list RateLimitPolicyList {
+    member: RateLimitPolicy
+}
+
+map ServiceMetadataMap {
     key: String
     value: String
 }
