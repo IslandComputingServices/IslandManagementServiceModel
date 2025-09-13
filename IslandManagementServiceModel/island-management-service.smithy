@@ -188,7 +188,7 @@ structure CreateIslandRequest {
     IslandPrivateZoneIRN: String
 
     @pattern("^irn:ics:ssacms:ap-in-1:organization/[a-zA-Z0-9-]+:ssa-config/[a-zA-Z0-9-]+$")
-    SSAConfigId: String
+    SSAConfigIRN: String
 
     /// User optional - Compute configuration (defaults applied if not provided)
     ComputeConfiguration: ComputeConfiguration
@@ -412,7 +412,7 @@ structure Island {
     IslandPrivateZoneIRN: String
 
     @pattern("^irn:ics:ssacms:ap-in-1:organization/[a-zA-Z0-9-]+:ssa-config/[a-zA-Z0-9-]+$")
-    SSAConfigId: String
+    SSAConfigIRN: String
 
     /// User-configurable - Island-level compute configuration
     ComputeConfiguration: ComputeConfiguration
