@@ -365,9 +365,9 @@ structure Island {
     @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island/[a-zA-Z0-9-]+$")
     IslandIRN: String
 
-    /// System-generated - Short island identifier for convenience
+    /// System-generated - Island identifier (ICS-native hex format)
     @required
-    @pattern("^isl-[a-zA-Z0-9]+$")
+    @pattern("^isl-[0-9a-f]{16}$")
     IslandId: String
 
     /// User-provided - Organization ID (for ICS multi-tenant architecture)
@@ -461,9 +461,9 @@ structure IslandConnection {
     @pattern("^irn:ics:ims:ap-in-1:organization/[a-zA-Z0-9-]+:island-connection/[a-zA-Z0-9-]+$")
     ConnectionIRN: String
 
-    /// System-generated - Short connection identifier for convenience
+    /// System-generated - Connection identifier (ICS-native hex format)
     @required
-    @pattern("^icon-[a-zA-Z0-9]+$")
+    @pattern("^icon-[0-9a-f]{16}$")
     ConnectionId: String
 
     /// System-managed - Version field required by ICS standards
